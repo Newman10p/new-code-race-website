@@ -67,6 +67,44 @@ Same body; returns Server-Sent Events: `data: {"delta": "..."}` ... `data: [DONE
 ### `GET /healthz`
 Shows which providers are configured.
 
+### `GET /v1/models?provider=openrouter`
+Lists the models available on your configured free providers (keys stay server-side).
+
+### `POST /v1/embeddings`
+Free embeddings via OpenRouter — for semantic search, RAG, dedupe.
+```json
+{"input": ["some text", "more text"], "model": "baichuan-ai/baichuan-embedding:free"}
+```
+Returns OpenAI-style `data: [{"index": 0, "embedding": [...]}]` plus usage.
+
+### `POST /v1/structured`
+Ask the model for JSON back and get a **parsed object** (handles markdown fences / stray prose). Optionally pass a JSON Schema under `"schema"` and the gateway validates the output (422 if it doesn't conform).
+```json
+{
+  "messages": [{"role": "user", "content": "Extract name & date from: 'Meeting with Sam on May 3'"}],
+  "schema": {"type": "object", "properties": {"name": {"type": "string"}, "date": {"type": "string"}}, "required": ["name", "date"]}
+}
+```
+Response: `{"data": {"name": "Sam", "date": "May 3"}, "model": "...", "provider": "...", "usage": {...}}`
+
+### `POST /v1/summarize`
+Short title for a chat thread/article (e.g. auto-naming conversations in a sidebar).
+```json
+{"text": "long conversation ...", "language": "en", "max_words": 8}
+```
+Response: `{"title": "Team Sync Notes", "model": "...", "provider": "..."}`
+
+### `POST /v1/moderate`
+Safety-check user-generated content before storing/showing it. Uses the free chat model as a classifier.
+```json
+{"input": "text to check"}
+```
+Response: `{"flagged": true, "categories": ["violence"], "reasoning": "...", "model": "...", "provider": "..."}`
+Categories: violence, hate_speech, sexual_content, self_harm, illegal_activity.
+Note: this is LLM-based moderation (best-effort), not a certified safety filter.
+
+All new endpoints require `X-Internal-Token` and respect the same rate limiter + model allowlist.
+
 ## Calling it from your main backend (example)
 
 ```python

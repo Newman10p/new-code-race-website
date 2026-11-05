@@ -32,6 +32,10 @@ class Settings:
     openrouter_default_model: str = os.getenv(
         "OPENROUTER_DEFAULT_MODEL", "meta-llama/llama-3.3-70b-instruct:free"
     )
+    openrouter_default_embedding_model: str = os.getenv(
+        "OPENROUTER_DEFAULT_EMBEDDING_MODEL",
+        "baichuan-ai/baichuan-embedding:free",
+    )
 
     # Free cloud option 2: Groq (very fast free tier), https://console.groq.com/keys
     groq_api_key: str = os.getenv("GROQ_API_KEY", "")
