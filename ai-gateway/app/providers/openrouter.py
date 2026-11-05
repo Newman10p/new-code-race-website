@@ -37,6 +37,38 @@ class OpenRouterProvider(LLMProvider):
     def _url(self) -> str:
         return f"{self._s.openrouter_base_url}/chat/completions"
 
+    @property
+    def _embed_url(self) -> str:
+        return f"{self._s.openrouter_base_url}/embeddings"
+
+    async def embed(self, inputs: list[str], model: str | None = None) -> dict[str, Any]:
+        """Free embeddings via OpenRouter (e.g. for semantic search / RAG)."""
+        payload = {
+            "model": model or self._s.openrouter_default_embedding_model,
+            "input": inputs,
+        }
+        try:
+            async with httpx.AsyncClient(timeout=self._s.request_timeout) as client:
+                resp = await client.post(self._embed_url, json=payload, headers=self._headers)
+        except httpx.HTTPError as exc:
+            raise ProviderError(f"OpenRouter unreachable: {exc}") from exc
+
+        if resp.status_code >= 400:
+            raise ProviderError(
+                f"OpenRouter error {resp.status_code}: {resp.text[:300]}"
+            )
+        data: dict[str, Any] = resp.json()
+        usage = data.get("usage") or {}
+        return {
+            "model": data.get("model", payload["model"]),
+            "data": data.get("data", []),
+            "usage": {
+                "prompt_tokens": usage.get("prompt_tokens", 0),
+                "completion_tokens": 0,
+                "total_tokens": usage.get("total_tokens", usage.get("prompt_tokens", 0)),
+            },
+        }
+
     def _model(self, req: ChatRequest) -> str:
         return req.model or self._s.openrouter_default_model
 
