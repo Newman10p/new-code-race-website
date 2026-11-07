@@ -24,7 +24,12 @@ services:
 
   ai-gateway:
     build: ./ai-gateway
-    env_file: ./ai-gateway/.env
+    # Optional: load ./ai-gateway/.env if present (gitignored). `docker compose
+    # config -q` doesn't fail when the file is missing — required:false needs
+    # Compose v2.24+ (Jan 2024), which ubuntu-latest in CI has.
+    env_file:
+      - path: ./ai-gateway/.env
+        required: false
     environment:
       # Override the .env's REDIS_URL so the gateway talks to the compose service.
       REDIS_URL: "redis://redis:6379/0"
