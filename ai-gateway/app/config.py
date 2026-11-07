@@ -52,6 +52,23 @@ class Settings:
     request_timeout: float = float(os.getenv("AI_REQUEST_TIMEOUT", "60"))
     rate_limit_per_minute: int = int(os.getenv("AI_RATE_LIMIT_PER_MINUTE", "30"))
 
+    # Per-user daily token budget. 0 = disabled. Checked against the usage store
+    # before every chat/embed call; once a user has burned this many tokens in
+    # the last 24h they get 429 until the window rolls.
+    daily_token_limit_per_user: int = int(
+        os.getenv("AI_DAILY_TOKEN_LIMIT_PER_USER", "0")
+    )
+
+    # Redis URL for the distributed rate limiter. If empty, falls back to an
+    # in-memory limiter (single-process only; resets on restart). Set this in
+    # any multi-instance / docker-compose deployment.
+    redis_url: str = os.getenv("REDIS_URL", "")
+
+    # SQLite path for usage persistence. If empty, usage is NOT persisted and the
+    # /v1/usage endpoint returns 503. Default in docker-compose: /data/usage.db.
+    # Use ":memory:" for tests (NB: each connection sees its own DB).
+    usage_db_path: str = os.getenv("USAGE_DB_PATH", "")
+
     allowed_models: list[str] = field(default_factory=lambda: _csv("AI_ALLOWED_MODELS"))
 
 

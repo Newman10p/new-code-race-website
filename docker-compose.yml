@@ -1,0 +1,58 @@
+# Run the AI gateway with a Redis sidecar for distributed rate limiting,
+# and a mounted volume for SQLite usage persistence.
+#
+#   cp .env.example .env       # then edit: set INTERNAL_API_TOKEN + provider key
+#   docker compose up --build
+#
+# Health check:  curl http://localhost:8000/healthz
+#
+# Everything below is overrideable via the .env file in the same directory.
+
+services:
+  redis:
+    image: redis:7-alpine
+    # Persist the rate-limit ZSETs across restarts (optional; in-memory is also
+    # fine since rate limits are short-lived).
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "no"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [ai-net]
+
+  ai-gateway:
+    build: ./ai-gateway
+    # Optional: load ./ai-gateway/.env if present (gitignored). `docker compose
+    # config -q` doesn't fail when the file is missing — required:false needs
+    # Compose v2.24+ (Jan 2024), which ubuntu-latest in CI has.
+    env_file:
+      - path: ./ai-gateway/.env
+        required: false
+    environment:
+      # Override the .env's REDIS_URL so the gateway talks to the compose service.
+      REDIS_URL: "redis://redis:6379/0"
+      USAGE_DB_PATH: "/data/usage.db"
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "${GATEWAY_PORT:-8000}:8000"
+    volumes:
+      # Persist the SQLite usage DB across container restarts.
+      - gateway-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/healthz', timeout=3).status==200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks: [ai-net]
+
+volumes:
+  gateway-data:
+
+networks:
+  ai-net:

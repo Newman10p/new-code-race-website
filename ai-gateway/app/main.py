@@ -20,13 +20,14 @@ import json
 import logging
 import re
 import time
-from collections import defaultdict, deque
+from datetime import datetime, timezone
 
 import httpx
-from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 
 from .config import get_settings
+from .rate_limit import get_rate_limiter
 from .router import ProviderRouter, build_provider
 from .schemas import (
     ChatMessage,
@@ -43,11 +44,12 @@ from .schemas import (
     Usage,
 )
 from .providers.base import ProviderError
+from .usage_store import get_usage_store
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 log = logging.getLogger("ai-gateway")
 
-app = FastAPI(title="AI Passageway", version="0.1.0")
+app = FastAPI(title="AI Passageway", version="0.2.0")
 
 
 # ---------- auth: only *your* backend may call this service ----------
@@ -59,20 +61,60 @@ def require_token(x_internal_token: str = Header(default="")) -> None:
         raise HTTPException(status_code=401, detail="Invalid or missing X-Internal-Token")
 
 
-# ---------- tiny in-memory rate limiter (per user_id, fixed 60s window) ----------
-_hits: dict[str, deque[float]] = defaultdict(deque)
+# ---------- rate limiting + per-user daily token quota ----------
+def rate_limit(user_id: str | None) -> None:
+    """Sliding 60s window cap, per user_id. Redis-backed when REDIS_URL is set."""
+    s = get_settings()
+    get_rate_limiter(s).check(user_id, s.rate_limit_per_minute)
 
 
-def rate_limit(req: ChatRequest) -> None:
-    limit = get_settings().rate_limit_per_minute
-    key = req.user_id or "anonymous"
-    now = time.monotonic()
-    q = _hits[key]
-    while q and now - q[0] > 60:
-        q.popleft()
-    if len(q) >= limit:
-        raise HTTPException(status_code=429, detail="Rate limit exceeded, slow down.")
-    q.append(now)
+async def enforce_daily_quota(user_id: str | None) -> None:
+    """Reject with 429 if the user has exceeded their 24h token budget.
+
+    No-op when AI_DAILY_TOKEN_LIMIT_PER_USER is 0 or when usage persistence is
+    disabled (can't count what we don't store).
+    """
+    s = get_settings()
+    if not s.daily_token_limit_per_user:
+        return
+    store = get_usage_store(s)
+    if store is None:
+        return
+    used = await store.daily_tokens(user_id)
+    if used >= s.daily_token_limit_per_user:
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                f"Daily token budget exhausted ({used}/"
+                f"{s.daily_token_limit_per_user}). Resets in <24h."
+            ),
+        )
+
+
+async def _record(
+    *,
+    user_id: str | None,
+    endpoint: str,
+    provider: str | None,
+    model: str | None,
+    usage: dict | None,
+    latency_ms: int,
+    status: str = "ok",
+    error: str | None = None,
+) -> None:
+    store = get_usage_store(get_settings())
+    if store is None:
+        return
+    await store.record(
+        user_id=user_id,
+        endpoint=endpoint,
+        provider=provider,
+        model=model,
+        usage=usage,
+        latency_ms=latency_ms,
+        status=status,
+        error=error,
+    )
 
 
 def _check_model_allowlist(req: ChatRequest) -> None:
@@ -81,18 +123,20 @@ def _check_model_allowlist(req: ChatRequest) -> None:
         raise HTTPException(status_code=400, detail=f"Model '{req.model}' is not allowed.")
 
 
-async def _chat_with_fallback(req: ChatRequest) -> dict:
+async def _chat_with_fallback(req: ChatRequest, endpoint: str = "/v1/chat") -> dict:
     """Run a chat request through the provider chain, returning the raw result dict.
 
     Result dict: {'content': str, 'model': str, 'usage': {...}, 'provider': str}
-    Raises HTTPException(502) if every provider fails.
+    Raises HTTPException(502) if every provider fails. Records usage + latency
+    to the persistent store (best-effort).
     """
+    await enforce_daily_quota(req.user_id)
     router = ProviderRouter(get_settings())
     last_err: Exception | None = None
+    t0 = time.perf_counter()
 
     for provider in router.resolve(req.provider):
         try:
-            t0 = time.perf_counter()
             result = await provider.chat(req)
             ms = int((time.perf_counter() - t0) * 1000)
             log.info(
@@ -101,11 +145,22 @@ async def _chat_with_fallback(req: ChatRequest) -> dict:
                 result["usage"]["total_tokens"],
             )
             result["provider"] = provider.name
+            await _record(
+                user_id=req.user_id, endpoint=endpoint,
+                provider=provider.name, model=result["model"],
+                usage=result["usage"], latency_ms=ms,
+            )
             return result
         except ProviderError as exc:
             last_err = exc
             log.warning("provider %s failed: %s -> trying fallback", provider.name, exc)
 
+    ms = int((time.perf_counter() - t0) * 1000)
+    await _record(
+        user_id=req.user_id, endpoint=endpoint, provider=None, model=None,
+        usage=None, latency_ms=ms, status="error",
+        error=f"all providers failed: {last_err}",
+    )
     raise HTTPException(status_code=502, detail=f"All providers failed: {last_err}")
 
 
@@ -115,7 +170,11 @@ def healthz():
     s = get_settings()
     return {
         "status": "ok",
+        "version": app.version,
         "default_provider": s.default_provider,
+        "rate_limiter": "redis" if s.redis_url else "in-memory",
+        "usage_persistence": bool(s.usage_db_path),
+        "daily_token_limit": s.daily_token_limit_per_user or None,
         "providers": {
             "openrouter": bool(s.openrouter_api_key),
             "groq": bool(s.groq_api_key),
@@ -165,8 +224,8 @@ async def list_models(provider: str | None = None):
 @app.post("/v1/chat", response_model=ChatResponse, dependencies=[Depends(require_token)])
 async def chat(req: ChatRequest) -> ChatResponse:
     _check_model_allowlist(req)
-    rate_limit(req)
-    result = await _chat_with_fallback(req)
+    rate_limit(req.user_id)
+    result = await _chat_with_fallback(req, endpoint="/v1/chat")
     return ChatResponse(
         content=result["content"],
         model=result["model"],
@@ -179,17 +238,31 @@ async def chat(req: ChatRequest) -> ChatResponse:
 async def chat_stream(req: ChatRequest) -> StreamingResponse:
     """Server-Sent Events: each event is a JSON object {'delta': text}."""
     _check_model_allowlist(req)
-    rate_limit(req)
+    rate_limit(req.user_id)
+    await enforce_daily_quota(req.user_id)
     router = ProviderRouter(get_settings())
     chain = router.resolve(req.provider)
     provider = chain[0]  # streaming does not auto-failover mid-response
 
     async def gen():
+        t0 = time.perf_counter()
         try:
             async for chunk in provider.stream(req):
                 yield f"data: {json.dumps({'delta': chunk})}\n\n"
             yield "data: [DONE]\n\n"
+            ms = int((time.perf_counter() - t0) * 1000)
+            await _record(
+                user_id=req.user_id, endpoint="/v1/chat/stream",
+                provider=provider.name, model=req.model, usage=None,
+                latency_ms=ms,
+            )
         except ProviderError as exc:
+            ms = int((time.perf_counter() - t0) * 1000)
+            await _record(
+                user_id=req.user_id, endpoint="/v1/chat/stream",
+                provider=provider.name, model=req.model, usage=None,
+                latency_ms=ms, status="error", error=str(exc),
+            )
             yield f"data: {json.dumps({'error': str(exc)})}\n\n"
 
     return StreamingResponse(gen(), media_type="text/event-stream")
@@ -199,24 +272,60 @@ async def chat_stream(req: ChatRequest) -> StreamingResponse:
 @app.post("/v1/embeddings", response_model=EmbedResponse, dependencies=[Depends(require_token)])
 async def embeddings(req: EmbedRequest) -> EmbedResponse:
     """Turn text into vectors — useful for semantic search / RAG / dedupe."""
-    allowed = get_settings().allowed_models
+    s = get_settings()
+    allowed = s.allowed_models
     if allowed and req.model and req.model not in allowed:
         raise HTTPException(status_code=400, detail=f"Model '{req.model}' is not allowed.")
+    rate_limit(req.user_id)
+    await enforce_daily_quota(req.user_id)
     try:
-        provider = build_provider("openrouter", get_settings())
+        provider = build_provider("openrouter", s)
     except ProviderError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc))
+    t0 = time.perf_counter()
     try:
         result = await provider.embed(req.input, model=req.model)
     except ProviderError as exc:
+        ms = int((time.perf_counter() - t0) * 1000)
+        await _record(
+            user_id=req.user_id, endpoint="/v1/embeddings",
+            provider=provider.name, model=req.model, usage=None,
+            latency_ms=ms, status="error", error=str(exc),
+        )
         raise HTTPException(status_code=502, detail=str(exc))
+    ms = int((time.perf_counter() - t0) * 1000)
     log.info("embed ok provider=%s model=%s count=%d user=%s",
              provider.name, result["model"], len(req.input), req.user_id)
+    await _record(
+        user_id=req.user_id, endpoint="/v1/embeddings",
+        provider=provider.name, model=result["model"],
+        usage=result["usage"], latency_ms=ms,
+    )
     return EmbedResponse(
         model=result["model"],
         provider=provider.name,
         data=result["data"],
         usage=Usage(**result["usage"]),
+    )
+
+
+# ---------- usage query endpoint ----------
+@app.get("/v1/usage", dependencies=[Depends(require_token)])
+async def usage(
+    user_id: str | None = Query(default=None),
+    since: str | None = Query(default=None, description="ISO8601 UTC, e.g. 2026-11-07T00:00:00"),
+    until: str | None = Query(default=None),
+    limit: int = Query(default=100, ge=1, le=1000),
+):
+    """Aggregate AI usage stats. Requires persistence (USAGE_DB_PATH) to be set."""
+    store = get_usage_store(get_settings())
+    if store is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Usage persistence is disabled. Set USAGE_DB_PATH to enable /v1/usage.",
+        )
+    return await store.get_usage(
+        user_id=user_id, since=since, until=until, limit=limit
     )
 
 
@@ -245,7 +354,7 @@ def _extract_json_object(text: str) -> dict:
 @app.post("/v1/structured", response_model=StructuredResponse, dependencies=[Depends(require_token)])
 async def structured(req: StructuredRequest) -> StructuredResponse:
     """Ask the model for JSON back; optionally validate it against your schema."""
-    rate_limit(req)
+    rate_limit(req.user_id)
     messages = list(req.messages)
     instruction = (
         "Respond with ONLY a valid JSON object, no prose, no markdown fences."
@@ -261,7 +370,7 @@ async def structured(req: StructuredRequest) -> StructuredResponse:
         max_tokens=req.max_tokens,
         user_id=req.user_id,
     )
-    result = await _chat_with_fallback(chat_req)
+    result = await _chat_with_fallback(chat_req, endpoint="/v1/structured")
     try:
         data = _extract_json_object(result["content"])
     except (ValueError, json.JSONDecodeError) as exc:
@@ -292,7 +401,7 @@ async def structured(req: StructuredRequest) -> StructuredResponse:
 @app.post("/v1/summarize", response_model=SummarizeResponse, dependencies=[Depends(require_token)])
 async def summarize(req: SummarizeRequest) -> SummarizeResponse:
     """Generate a short title for a chat thread or article (e.g. sidebar labels)."""
-    rate_limit(req)
+    rate_limit(req.user_id)
     prompt = (
         f"Summarize the following text into a concise title of at most {req.max_words} "
         f"words, in language '{req.language}'. Reply with ONLY the title, no quotes, no punctuation at the end.\n\n"
@@ -306,7 +415,7 @@ async def summarize(req: SummarizeRequest) -> SummarizeResponse:
         max_tokens=64,
         user_id=req.user_id,
     )
-    result = await _chat_with_fallback(chat_req)
+    result = await _chat_with_fallback(chat_req, endpoint="/v1/summarize")
     title = result["content"].strip().strip('"').strip("'").splitlines()[0][:120]
     return SummarizeResponse(title=title, model=result["model"], provider=result["provider"])
 
@@ -318,7 +427,7 @@ _MOD_CATEGORIES = ["violence", "hate_speech", "sexual_content", "self_harm", "il
 @app.post("/v1/moderate", response_model=ModerateResponse, dependencies=[Depends(require_token)])
 async def moderate(req: ModerateRequest) -> ModerateResponse:
     """Check whether user-generated content is unsafe before you store/show it."""
-    rate_limit(req)
+    rate_limit(req.user_id)
     prompt = (
         "You are a strict content-moderation classifier. Analyse the user text below.\n"
         f"Categories: {', '.join(_MOD_CATEGORIES)}.\n"
@@ -333,7 +442,7 @@ async def moderate(req: ModerateRequest) -> ModerateResponse:
         max_tokens=256,
         user_id=req.user_id,
     )
-    result = await _chat_with_fallback(chat_req)
+    result = await _chat_with_fallback(chat_req, endpoint="/v1/moderate")
     try:
         data = _extract_json_object(result["content"])
         flagged = bool(data.get("flagged", False))
