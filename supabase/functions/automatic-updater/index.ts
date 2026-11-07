@@ -3,12 +3,75 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
 const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 const cronSecret = Deno.env.get("CRON_SECRET");
+const aiGatewayUrl = Deno.env.get("AI_GATEWAY_URL");
+const aiGatewayToken = Deno.env.get("AI_GATEWAY_TOKEN");
 
 if (!supabaseUrl || !serviceKey) {
   throw new Error("Supabase environment variables are not configured.");
 }
 
 const supabase = createClient(supabaseUrl, serviceKey);
+
+interface ModerateVerdict {
+  flagged: boolean;
+  categories: string[];
+  reasoning: string;
+  model: string;
+  provider: string;
+}
+
+// Ask the hardened ai-gateway to safety-check a record's title before we
+// persist it. On any error (gateway down, network, etc.) we fail OPEN —
+// i.e. allow the upsert to proceed. The gateway is best-effort moderation,
+// not a hard gate; an ingest pipeline shouldn't be blocked by AI infra.
+// Returns null if the check should be skipped (no title, or gateway not
+// configured, or an error occurred).
+async function moderateTitle(
+  title: string | null | undefined,
+): Promise<ModerateVerdict | null> {
+  if (!title || !title.trim()) return null;
+  if (!aiGatewayUrl || !aiGatewayToken) return null;
+  try {
+    const r = await fetch(`${aiGatewayUrl.replace(/\/+$/, "")}/v1/moderate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Internal-Token": aiGatewayToken,
+      },
+      body: JSON.stringify({
+        input: title.slice(0, 8000),
+        // No user_id — this is a system-triggered sync, not a per-user action.
+      }),
+    });
+    if (!r.ok) return null;
+    return (await r.json()) as ModerateVerdict;
+  } catch {
+    return null;
+  }
+}
+
+// Persist a flagged-title decision so the operator can audit what was
+// rejected. Best-effort: log failures don't break the sync.
+async function logModeration(
+  context: string,
+  inputText: string,
+  verdict: ModerateVerdict,
+): Promise<void> {
+  try {
+    await supabase.from("content_moderation_log").insert({
+      user_id: null,
+      context,
+      input_text: inputText.slice(0, 1000),
+      flagged: verdict.flagged,
+      categories: verdict.categories,
+      reasoning: verdict.reasoning,
+      model: verdict.model,
+      provider: verdict.provider,
+    });
+  } catch (err) {
+    console.warn("content_moderation_log insert failed:", err);
+  }
+}
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
@@ -75,6 +138,7 @@ Deno.serve(async (req) => {
 
     let added = 0;
     let updated = 0;
+    let flaggedAndSkipped = 0;
 
     for (const item of records) {
       if (
@@ -86,6 +150,21 @@ Deno.serve(async (req) => {
         Array.isArray(item.data)
       ) {
         throw new Error("Each record needs an external_id and a data object.");
+      }
+
+      // AI moderation gate: if the gateway is configured and flags the
+      // title, skip this record entirely (don't upsert). The verdict is
+      // logged for audit. A null verdict means "no check performed"
+      // (no title / gateway not configured / gateway error) — proceed.
+      const verdict = await moderateTitle(item.title);
+      if (verdict && verdict.flagged) {
+        flaggedAndSkipped++;
+        await logModeration(
+          "automatic-updater.record.title",
+          String(item.title ?? ""),
+          verdict,
+        );
+        continue;
       }
 
       const record = {
@@ -143,7 +222,12 @@ Deno.serve(async (req) => {
       if (sourceError) throw sourceError;
     }
 
-    return Response.json({ success: true, records_added: added, records_updated: updated });
+    return Response.json({
+      success: true,
+      records_added: added,
+      records_updated: updated,
+      records_flagged_and_skipped: flaggedAndSkipped,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown updater error";
     const now = new Date().toISOString();
