@@ -3,3 +3,9 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+ai-gateway/data/
+*.db
+.venv/
+venv/
+.coverage
+htmlcov/
