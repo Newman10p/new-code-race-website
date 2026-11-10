@@ -1,4 +1,0 @@
-project_id = "new-code-race-website"
-
-[functions.automatic-updater]
-verify_jwt = false
