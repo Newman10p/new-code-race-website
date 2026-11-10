@@ -1,4 +1,10 @@
 project_id = "new-code-race-website"
 
 [functions.automatic-updater]
+# Cron-triggered (uses its own CRON_SECRET check), so JWT verification is off.
 verify_jwt = false
+
+[functions.moderate-content]
+# Called from the frontend with the user's Supabase session. JWT must be
+# verified so anon callers can't reach the gateway.
+verify_jwt = true
