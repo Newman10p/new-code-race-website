@@ -3,12 +3,23 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
-import { Check, Copy, FileCode2 } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Copy, Download, FileCode2 } from "lucide-react";
+
+const EXT: Record<string, string> = {
+  python: "py", py: "py", javascript: "js", js: "js", jsx: "jsx", typescript: "ts", ts: "ts",
+  tsx: "tsx", html: "html", css: "css", json: "json", cpp: "cpp", c: "c", java: "java",
+  sql: "sql", bash: "sh", sh: "sh", md: "md", yaml: "yml", go: "go", rust: "rs",
+};
 
 function CodeBlock({ className, children }: { className?: string; children?: React.ReactNode }) {
   const [copied, setCopied] = useState(false);
-  const lang = /language-(\w+)/.exec(className ?? "")?.[1] ?? "code";
+  const [expanded, setExpanded] = useState(false);
+  const lang = /language-([\w+#-]+)/.exec(className ?? "")?.[1] ?? "code";
   const code = String(children ?? "").replace(/\n$/, "");
+  const lines = code.split("\n");
+  const collapsible = lines.length > 18;
+  const shown = collapsible && !expanded ? lines.slice(0, 18) : lines;
+  const numbered = lines.length > 2;
 
   const copy = async () => {
     try {
@@ -20,31 +31,76 @@ function CodeBlock({ className, children }: { className?: string; children?: Rea
     }
   };
 
+  const download = () => {
+    const blob = new Blob([code], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `code-race-snippet.${EXT[lang.toLowerCase()] ?? "txt"}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="my-4 overflow-hidden rounded-lg border border-code-line bg-code-bg">
-      <div className="flex items-center justify-between border-b border-code-line bg-code-head px-4 py-2">
+      <div className="flex items-center justify-between border-b border-code-line bg-code-head px-3 py-2">
         <span className="flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-wider text-code-muted">
           <FileCode2 className="size-3" />
           {lang}
+          <span className="normal-case tracking-normal opacity-60">· {lines.length} lines</span>
         </span>
-        <button
-          onClick={copy}
-          className="flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium text-code-muted transition-colors hover:bg-white/10 hover:text-code"
-        >
-          {copied ? (
-            <>
-              <Check className="size-3.5 text-accent" /> Copied
-            </>
-          ) : (
-            <>
-              <Copy className="size-3.5" /> Copy
-            </>
-          )}
-        </button>
+        <span className="flex items-center gap-0.5">
+          <button
+            onClick={download}
+            title="Download snippet"
+            aria-label="Download snippet"
+            className="ring-focus flex size-6 items-center justify-center rounded-md text-code-muted transition-colors hover:bg-white/10 hover:text-code"
+          >
+            <Download className="size-3.5" />
+          </button>
+          <button
+            onClick={copy}
+            className="ring-focus flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium text-code-muted transition-colors hover:bg-white/10 hover:text-code"
+          >
+            {copied ? (
+              <>
+                <Check className="size-3.5 text-accent" /> Copied
+              </>
+            ) : (
+              <>
+                <Copy className="size-3.5" /> Copy
+              </>
+            )}
+          </button>
+        </span>
       </div>
-      <pre className="code-chrome overflow-x-auto p-4 text-[13px] leading-relaxed">
-        <code className="font-mono text-code">{highlight(code)}</code>
-      </pre>
+      <div className="relative">
+        <pre className="code-chrome overflow-x-auto p-4 text-[13px] leading-relaxed">
+          <code className="block min-w-max font-mono text-code">
+            {shown.map((line, i) => (
+              <span key={i} className="md-code-line">
+                {numbered && <span className="md-ln" aria-hidden="true">{i + 1}</span>}
+                <span className="whitespace-pre">{highlight(line || " ")}</span>
+              </span>
+            ))}
+          </code>
+        </pre>
+        {collapsible && !expanded && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-code-bg to-transparent" />
+        )}
+      </div>
+      {collapsible && (
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          className="flex w-full items-center justify-center gap-1.5 border-t border-code-line bg-code-head py-1.5 text-[11.5px] font-medium text-code-muted transition-colors hover:text-code"
+        >
+          {expanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+          {expanded ? "Collapse code" : `Show all ${lines.length} lines`}
+        </button>
+      )}
     </div>
   );
 }

@@ -12,6 +12,7 @@ import {
   Shapes,
   SquareCode,
   GitFork,
+  Sparkles,
 } from "lucide-react";
 import { conversations, projects } from "../lib/store";
 import type { Page } from "../lib/nav";
@@ -49,6 +50,7 @@ export function CommandPalette({
   const convs = conversations.use();
   const items: Item[] = useMemo(
     () => [
+      { id: "n0", label: "CODE RACE AI", group: "Navigate", icon: Sparkles, page: "ai" },
       { id: "n1", label: "Home", group: "Navigate", icon: Compass, page: "home" },
       { id: "n2", label: "Learn", group: "Navigate", icon: GraduationCap, page: "learn" },
       { id: "n3", label: "Create", group: "Navigate", icon: Shapes, page: "create" },

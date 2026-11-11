@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   Archive, ChevronsLeft, ChevronsRight, Compass, FolderKanban, GraduationCap, LayoutGrid, LifeBuoy,
-  MoreHorizontal, PenLine, Pencil, Pin, PinOff, Search, Settings2, Shapes, Trash2, UserRound, X,
+  MoreHorizontal, PenLine, Pencil, Pin, PinOff, Search, Settings2, Shapes, Sparkles, Trash2, UserRound, X,
 } from "lucide-react";
 import { cn } from "../utils/cn";
 import { LumenMark } from "./LumenMark";
@@ -14,6 +14,7 @@ import { initials } from "../lib/profile";
 import type { Page } from "../lib/nav";
 
 const MAIN = [
+  { id: "ai" as Page, label: "CODE RACE AI", icon: Sparkles },
   { id: "home" as Page, label: "Home", icon: Compass },
   { id: "learn" as Page, label: "Learn", icon: GraduationCap },
   { id: "create" as Page, label: "Create", icon: Shapes },
