@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import type { AiLanguage, ToolId } from "./aiTools";
 
 /* =========================================================================
  * Local persistence. Data lives in this browser's localStorage, scoped per
@@ -84,6 +85,11 @@ export interface Message {
   model?: string;
   attachments?: Attachment[];
   createdAt: number;
+  /** Which CODE RACE AI tool produced the response. */
+  tool?: ToolId;
+  /** True for locally-built demonstration replies — never presented as model output. */
+  demo?: boolean;
+  feedback?: "up" | "down";
 }
 
 export interface Conversation {
@@ -96,6 +102,10 @@ export interface Conversation {
   explainStyle?: string;
   projectId?: string;
   branchedFrom?: string;
+  /** CODE RACE AI workspace state (optional: older conversations predate it). */
+  aiTool?: ToolId;
+  language?: AiLanguage;
+  topic?: string;
   createdAt: number;
   updatedAt: number;
   messages: Message[];

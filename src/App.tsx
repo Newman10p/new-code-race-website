@@ -21,6 +21,7 @@ import { Visualise } from "./pages/Visualise";
 import { Project } from "./pages/Project";
 import { Profile } from "./pages/Profile";
 import { Onboarding } from "./pages/Onboarding";
+import { AiWorkspace } from "./pages/AiWorkspace";
 import { useAppearance } from "./hooks/useAppearance";
 import type { Appearance } from "./hooks/useAppearance";
 import { useTutor } from "./hooks/useTutor";
@@ -53,7 +54,7 @@ export default function App() {
 function Root() {
   const appearance = useAppearance();
   const { onboarded } = useProfile();
-  const [page, setPage] = useState<Page>("home");
+  const [page, setPage] = useState<Page>("ai");
   const [arg, setArg] = useState<string | undefined>();
   const { mark } = useJourney();
 
@@ -65,10 +66,14 @@ function Root() {
     if (m) mark(m);
   }, [mark]);
 
-  if (!onboarded) return <Onboarding />;
+  if (!onboarded && page !== "ai") return <Onboarding />;
   return (
     <TourProvider onNavigate={navigate}>
-      <Shell appearance={appearance} page={page} arg={arg} navigate={navigate} clearArg={() => setArg(undefined)} />
+      {page === "ai" ? (
+        <AiWorkspace convId={arg} onNavigate={navigate} />
+      ) : (
+        <Shell appearance={appearance} page={page} arg={arg} navigate={navigate} clearArg={() => setArg(undefined)} />
+      )}
     </TourProvider>
   );
 }

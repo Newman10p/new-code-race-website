@@ -325,3 +325,223 @@ kbd {
 
 @keyframes listen { 0%,100% { transform: scaleY(0.4); } 50% { transform: scaleY(1); } }
 .listen-bar { animation: listen 0.9s ease-in-out infinite; transform-origin: center; }
+
+/* ============================================================================
+ * CODE RACE AI — dedicated workspace theme
+ * Deep navy + charcoal, violet → electric blue → cyan accents. The workspace
+ * stays dark-first even when the learning platform is in light mode.
+ * ========================================================================== */
+.cr-ai,
+.cr-ai-portal {
+  color-scheme: dark;
+  --bg: #05060f;
+  --sidebar: #070a16;
+  --surface: #0b1020;
+  --surface-2: #111830;
+  --surface-3: #182142;
+  --border: #1a2240;
+  --border-strong: #2a3559;
+
+  --text: #eef1fb;
+  --text-2: #b6bfda;
+  --text-3: #8b96b8;
+
+  --accent: #8b5cf6;
+  --accent-hover: #a78bfa;
+  --accent-deep: #6d4aff;
+  --accent-soft: rgba(139, 92, 246, 0.13);
+  --accent-line: rgba(139, 92, 246, 0.42);
+  --accent-2: #22d3ee;
+  --accent-2-soft: rgba(34, 211, 238, 0.12);
+  --on-accent: #ffffff;
+  --warn: #fbbf24;
+  --danger: #fb7185;
+
+  --code-bg: #070b18;
+  --code-head: #0b1122;
+  --code-line: #1d2745;
+  --code-active: rgba(139, 92, 246, 0.14);
+  --code-text: #e7ecfb;
+  --code-muted: #8b96b8;
+  --tok-kw: #a5b4ff;
+  --tok-str: #7ee7c7;
+  --tok-com: #5b6788;
+  --tok-num: #fcd34d;
+  --tok-fn: #67e8f9;
+
+  --grid: rgba(148, 163, 255, 0.055);
+  --shadow: 0 24px 60px -20px rgba(2, 4, 12, 0.9);
+  --ring: rgba(139, 92, 246, 0.3);
+  color: var(--text);
+
+  /* Re-point the shared Tailwind theme tokens at this scope. Tailwind's
+     --color-* values resolve on :root, so overriding the raw tokens alone
+     would leave every bg-surface / text-accent utility on the platform
+     palette. Re-declaring them here keeps utilities and raw tokens aligned. */
+  --color-app: var(--bg);
+  --color-sidebar: var(--sidebar);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border: var(--border);
+  --color-strong: var(--border-strong);
+  --color-primary: var(--text);
+  --color-secondary: var(--text-2);
+  --color-muted: var(--text-3);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-deep: var(--accent-deep);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-line: var(--accent-line);
+  --color-accent-2: var(--accent-2);
+  --color-accent-2-soft: var(--accent-2-soft);
+  --color-on-accent: var(--on-accent);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-code-bg: var(--code-bg);
+  --color-code-head: var(--code-head);
+  --color-code-line: var(--code-line);
+  --color-code-active: var(--code-active);
+  --color-code: var(--code-text);
+  --color-code-muted: var(--code-muted);
+  --color-tok-kw: var(--tok-kw);
+  --color-tok-str: var(--tok-str);
+  --color-tok-com: var(--tok-com);
+  --color-tok-num: var(--tok-num);
+  --color-tok-fn: var(--tok-fn);
+  --shadow-float: var(--shadow);
+}
+
+/* The theme scope itself paints the workspace; portal overlays reuse the
+   tokens without inheriting an opaque background. */
+.cr-ai {
+  background: var(--bg);
+}
+
+.cr-ai .cr-display {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.cr-gradient-brand {
+  background: linear-gradient(135deg, #a78bfa 0%, #4f8cff 52%, #22d3ee 100%);
+}
+
+.cr-text-gradient {
+  background: linear-gradient(100deg, #c4b5fd 0%, #7cb0ff 48%, #67e8f9 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.cr-panel {
+  background: linear-gradient(180deg, rgba(15, 21, 43, 0.94) 0%, rgba(8, 12, 25, 0.98) 100%);
+}
+
+.cr-composer {
+  background: linear-gradient(180deg, rgba(18, 25, 49, 0.97) 0%, rgba(10, 15, 30, 0.99) 100%);
+  box-shadow: 0 24px 60px -28px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.cr-composer:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.13), 0 26px 64px -26px rgba(0, 0, 0, 0.98),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.cr-orb-glow {
+  filter: blur(26px);
+  background: radial-gradient(closest-side, rgba(139, 92, 246, 0.55), rgba(79, 140, 255, 0.28) 60%, transparent 100%);
+}
+
+.cr-aurora {
+  background:
+    radial-gradient(60% 55% at 18% 0%, rgba(109, 74, 255, 0.16), transparent 70%),
+    radial-gradient(50% 45% at 85% 8%, rgba(34, 211, 238, 0.1), transparent 70%),
+    radial-gradient(40% 40% at 55% 100%, rgba(79, 140, 255, 0.07), transparent 70%);
+}
+
+.cr-card {
+  position: relative;
+  transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+.cr-card:hover {
+  border-color: rgba(139, 92, 246, 0.42);
+  background-color: rgba(22, 30, 58, 0.7);
+  box-shadow: 0 16px 40px -24px rgba(109, 74, 255, 0.65);
+  transform: translateY(-1px);
+}
+.cr-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 0% 0%, rgba(139, 92, 246, 0.12), transparent 55%);
+  transition: opacity 180ms ease;
+}
+.cr-card:hover::after { opacity: 1; }
+
+.cr-user-bubble {
+  background: linear-gradient(180deg, rgba(45, 38, 86, 0.55) 0%, rgba(28, 28, 60, 0.5) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.24);
+}
+
+.cr-thinking span {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--accent-hover);
+  animation: cr-bounce 1.1s ease-in-out infinite;
+}
+.cr-thinking span:nth-child(2) { animation-delay: 0.13s; opacity: 0.75; }
+.cr-thinking span:nth-child(3) { animation-delay: 0.26s; opacity: 0.5; }
+
+@keyframes cr-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+@keyframes cr-orbit { to { transform: rotate(360deg); } }
+.cr-orbit { animation: cr-orbit 26s linear infinite; }
+.cr-orbit-reverse { animation: cr-orbit 18s linear infinite reverse; }
+
+@keyframes cr-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+.cr-breathe { animation: cr-breathe 6s ease-in-out infinite; }
+
+@keyframes cr-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.cr-rise { animation: cr-rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@keyframes cr-sheen {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+.cr-sheen {
+  background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.16), transparent);
+  background-size: 200% 100%;
+  animation: cr-sheen 2.2s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cr-orbit, .cr-orbit-reverse, .cr-breathe, .cr-sheen, .cr-thinking span { animation: none !important; }
+}
+
+/* code line numbers inside the shared markdown renderer */
+.md-code-line { display: flex; gap: 1rem; }
+.md-code-line > .md-ln {
+  width: 2rem;
+  flex: none;
+  text-align: right;
+  user-select: none;
+  opacity: 0.34;
+  font-variant-numeric: tabular-nums;
+}

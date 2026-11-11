@@ -1,4 +1,5 @@
 export type Page =
+  | "ai"
   | "home"
   | "learn"
   | "create"
@@ -11,6 +12,7 @@ export type Page =
   | "project";
 
 export const PAGE_TITLES: Record<Page, string> = {
+  ai: "CODE RACE AI",
   home: "Home",
   learn: "Learn",
   create: "Create",
