@@ -14,7 +14,7 @@ import { initials } from "../lib/profile";
 import type { Page } from "../lib/nav";
 
 const MAIN = [
-  { id: "ai" as Page, label: "CODE RACE AI", icon: Sparkles },
+  { id: "ai" as Page, label: "CodeQuest AI", icon: Sparkles },
   { id: "home" as Page, label: "Home", icon: Compass },
   { id: "learn" as Page, label: "Learn", icon: GraduationCap },
   { id: "create" as Page, label: "Create", icon: Shapes },

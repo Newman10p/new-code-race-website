@@ -142,7 +142,7 @@ export function AiSidebar({
         )}
       />
       <aside
-        aria-label="CODE RACE AI navigation"
+        aria-label="CodeQuest AI navigation"
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex w-[286px] flex-col border-r border-border bg-sidebar transition-[width,transform] duration-300 xl:static xl:z-auto xl:translate-x-0",
           collapsed ? "xl:w-[68px]" : "xl:w-[286px]",
@@ -157,7 +157,7 @@ export function AiSidebar({
           {wide && (
             <div className="min-w-0 flex-1 leading-none">
               <div className="flex items-center gap-1.5">
-                <span className="text-[13.5px] font-semibold tracking-[0.14em] text-primary">CODE RACE</span>
+                <span className="text-[13.5px] font-semibold tracking-[0.14em] text-primary">CODEQUEST</span>
                 <span className="rounded-[3px] border border-accent-line bg-accent-soft px-1 py-px text-[8.5px] font-semibold tracking-[0.1em] text-[#c4b5fd]">
                   AI
                 </span>

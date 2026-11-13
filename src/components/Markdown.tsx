@@ -36,7 +36,7 @@ function CodeBlock({ className, children }: { className?: string; children?: Rea
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `code-race-snippet.${EXT[lang.toLowerCase()] ?? "txt"}`;
+    a.download = `codequest-snippet.${EXT[lang.toLowerCase()] ?? "txt"}`;
     document.body.appendChild(a);
     a.click();
     a.remove();

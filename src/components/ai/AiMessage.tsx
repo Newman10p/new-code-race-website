@@ -81,7 +81,7 @@ export const AiMessage = memo(function AiMessage({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `code-race-ai.${EXT[block.lang.toLowerCase()] ?? languageMeta(language).ext}`;
+    a.download = `codequest-ai.${EXT[block.lang.toLowerCase()] ?? languageMeta(language).ext}`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -191,7 +191,7 @@ export const AiMessage = memo(function AiMessage({
               <RaceMark className="size-3" />
             </span>
           </span>
-          <span className="text-[11.5px] font-semibold tracking-[0.01em] text-primary">CODE RACE AI</span>
+          <span className="text-[11.5px] font-semibold tracking-[0.01em] text-primary">CodeQuest AI</span>
           <span className={cn("inline-flex items-center gap-1 rounded-[4px] border px-1.5 py-px text-[9.5px] font-medium", tag.className)}>
             <meta.icon className="size-2.5" />
             {tag.label}

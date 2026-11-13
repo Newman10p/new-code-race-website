@@ -19,7 +19,7 @@ import type { LucideIcon } from "lucide-react";
 import type { Mode } from "./store";
 
 /* =========================================================================
- * CODE RACE AI — tool + language metadata.
+ * CodeQuest AI — tool + language metadata.
  * Pure data: no store imports (the store uses these types), so it is safe to
  * consume from anywhere. Every tool maps onto the platform's existing tutor
  * engine via `mode`, adding a focused instruction on top.
@@ -48,7 +48,7 @@ export const AI_TOOLS: ToolMeta[] = [
     short: "Auto",
     description: "Routes each message to the right assistant.",
     icon: Sparkles,
-    placeholder: "Ask CODE RACE AI anything — or paste code and an error…",
+    placeholder: "Ask CodeQuest AI anything — or paste code and an error…",
     mode: "ask",
     tint: "text-[#a78bfa]",
     instruction: "",

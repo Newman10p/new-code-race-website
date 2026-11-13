@@ -12,7 +12,7 @@ export type Page =
   | "project";
 
 export const PAGE_TITLES: Record<Page, string> = {
-  ai: "CODE RACE AI",
+  ai: "CodeQuest AI",
   home: "Home",
   learn: "Learn",
   create: "Create",

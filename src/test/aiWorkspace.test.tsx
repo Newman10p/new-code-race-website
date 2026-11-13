@@ -10,13 +10,13 @@ async function openWorkspace() {
   return user;
 }
 
-describe("CODE RACE AI workspace", () => {
+describe("CodeQuest AI workspace", () => {
   test("renders the welcome workspace with prompt cards and no route errors", async () => {
     await openWorkspace();
     expect(screen.getByText("Suggested prompts")).toBeTruthy();
     expect(screen.getByRole("button", { name: /Debug My Code/ })).toBeTruthy();
-    expect(screen.getByRole("button", { name: /AI model: CODE RACE Auto/ })).toBeTruthy();
-    expect(screen.getByLabelText("Message CODE RACE AI")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /AI model: CodeQuest Auto/ })).toBeTruthy();
+    expect(screen.getByLabelText("Message CodeQuest AI")).toBeTruthy();
     expect(screen.getByText(/Demo mode — replies are local samples/i)).toBeTruthy();
   });
 
@@ -32,12 +32,12 @@ describe("CODE RACE AI workspace", () => {
 
   test("creates a conversation from the composer and supports tool + language selection", async () => {
     const user = await openWorkspace();
-    const input = screen.getByLabelText("Message CODE RACE AI");
+    const input = screen.getByLabelText("Message CodeQuest AI");
     await user.type(input, "Explain promises in JavaScript");
     await user.keyboard("{Enter}");
 
     expect((await screen.findAllByText("Explain promises in JavaScript")).length).toBeGreaterThan(0);
-    expect(screen.getByRole("button", { name: "AI model: CODE RACE Auto" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "AI model: CodeQuest Auto" })).toBeTruthy();
 
     // Tool selector menu.
     await user.click(screen.getByRole("button", { name: "Auto" }));
@@ -52,7 +52,7 @@ describe("CODE RACE AI workspace", () => {
 
   test("renames and deletes a conversation with confirmation", async () => {
     const user = await openWorkspace();
-    await user.type(screen.getByLabelText("Message CODE RACE AI"), "Teach me recursion");
+    await user.type(screen.getByLabelText("Message CodeQuest AI"), "Teach me recursion");
     await user.keyboard("{Enter}");
     await screen.findAllByText("Teach me recursion");
     // Rename after the demonstration reply settles so the click does not race

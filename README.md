@@ -1,4 +1,4 @@
-# Code Race Platform
+# CodeQuest Platform
 
 Supabase-backed platform for user accounts, schools, GitHub identities, competitions, points, and future features.
 

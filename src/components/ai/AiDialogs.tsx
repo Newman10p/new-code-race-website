@@ -200,7 +200,7 @@ export function HelpDialog({
     <Modal
       open={open}
       onClose={onClose}
-      title="CODE RACE AI"
+      title="CodeQuest AI"
       description="Your coding workspace: explanations, debugging, reviews, challenges and lessons in one conversation."
       icon={<Sparkles className="size-4" />}
       width="max-w-xl"
@@ -225,7 +225,7 @@ export function HelpDialog({
           </div>
           <p className="mt-1 text-[11.5px] leading-[18px] text-secondary">
             {connected
-              ? "Responses stream from the CODE RACE AI backend. Provider keys stay server-side — never in this browser."
+              ? "Responses stream from the CodeQuest AI backend. Provider keys stay server-side — never in this browser."
               : "No model is connected. Replies are clearly labelled local samples that demonstrate the response format; they are not model output."}
           </p>
         </div>
@@ -253,7 +253,7 @@ export function HelpDialog({
             { icon: BookOpen, title: "Teaching, not just answers", body: "The assistant explains reasoning and can withhold solutions while you attempt a challenge." },
             { icon: ShieldCheck, title: "Honest by default", body: "Code execution and challenge context are labelled as unavailable until those services are connected." },
             { icon: Link2, title: "Context you control", body: "Language, project and attachments appear in the context panel before they are sent." },
-            { icon: Code2, title: "Ready for the IDE", body: "The attachment workflow is prepared for sending selected code from the CODE RACE editor." },
+            { icon: Code2, title: "Ready for the IDE", body: "The attachment workflow is prepared for sending selected code from the CodeQuest editor." },
           ].map((c) => (
             <div key={c.title} className="rounded-lg border border-border bg-surface-2/40 p-3">
               <c.icon className="size-3.5 text-[#a78bfa]" />
@@ -309,7 +309,7 @@ export function PreferencesDialog({
       open={open}
       onClose={onClose}
       title="AI preferences"
-      description="Connect the CODE RACE AI backend. Provider keys stay on the server — this browser never holds one."
+      description="Connect the CodeQuest AI backend. Provider keys stay on the server — this browser never holds one."
       icon={<Plug className="size-4" />}
       width="max-w-xl"
       footer={
@@ -385,7 +385,7 @@ export function PreferencesDialog({
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && save()}
-            placeholder={window.CODEQUEST?.apiUrl || import.meta.env.VITE_LUMEN_API_URL || "https://your-domain.example/api/code-race-ai"}
+            placeholder={window.CODEQUEST?.apiUrl || import.meta.env.VITE_LUMEN_API_URL || "https://your-domain.example/api/codequest-ai"}
             aria-label="Backend base URL"
             spellCheck={false}
             className={cn(
