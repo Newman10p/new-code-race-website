@@ -85,7 +85,7 @@ export interface Message {
   model?: string;
   attachments?: Attachment[];
   createdAt: number;
-  /** Which CODE RACE AI tool produced the response. */
+  /** Which CodeQuest AI tool produced the response. */
   tool?: ToolId;
   /** True for locally-built demonstration replies — never presented as model output. */
   demo?: boolean;
@@ -102,7 +102,7 @@ export interface Conversation {
   explainStyle?: string;
   projectId?: string;
   branchedFrom?: string;
-  /** CODE RACE AI workspace state (optional: older conversations predate it). */
+  /** CodeQuest AI workspace state (optional: older conversations predate it). */
   aiTool?: ToolId;
   language?: AiLanguage;
   topic?: string;

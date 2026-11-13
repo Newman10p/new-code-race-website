@@ -142,7 +142,7 @@ ${fixed}
 2. Check the boundary: the first and last valid ids.
 3. Add a test that asserts the empty result is handled.
 
-> Execution is not connected to this workspace, so the snippets have not been run. Copy them into the CODE RACE editor to verify.
+> Execution is not connected to this workspace, so the snippets have not been run. Copy them into the CodeQuest editor to verify.
 `
   );
 }
@@ -615,7 +615,7 @@ You asked:
 
 > ${quoted || "a question about programming"}
 
-Since no model is connected, I can show you how CODE RACE AI structures an answer rather than invent one. A good technical explanation usually has four parts:
+Since no model is connected, I can show you how CodeQuest AI structures an answer rather than invent one. A good technical explanation usually has four parts:
 
 1. **The short answer** — one or two sentences you could repeat to a teammate.
 2. **The mechanism** — what actually happens, step by step.

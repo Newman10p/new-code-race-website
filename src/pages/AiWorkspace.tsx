@@ -120,8 +120,8 @@ export function AiWorkspace({
     conn.status === "ok"
       ? conn.models.find((m) => m.available && m.id === s.model)?.name ??
         conn.models.find((m) => m.available)?.name ??
-        "CODE RACE Auto"
-      : "CODE RACE Auto";
+        "CodeQuest Auto"
+      : "CodeQuest Auto";
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const pinnedRef = useRef(true);
@@ -253,7 +253,7 @@ export function AiWorkspace({
     const header = `# ${conv.title}\n\n*${toolMeta(conv.aiTool).label} · ${languageMeta(conv.language).label} · exported ${new Date().toLocaleString()}*\n`;
     const body = conv.messages
       .map((m) => {
-        const who = m.role === "user" ? "You" : `CODE RACE AI${m.demo ? " (demo sample)" : ""}`;
+        const who = m.role === "user" ? "You" : `CodeQuest AI${m.demo ? " (demo sample)" : ""}`;
         const files = m.attachments?.length
           ? `\n\n_Attachments: ${m.attachments.map((a) => a.name).join(", ")}_`
           : "";
@@ -281,7 +281,7 @@ export function AiWorkspace({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${conv.title.replace(/[^\w\- ]+/g, "").trim().slice(0, 60) || "code-race-conversation"}.md`;
+    a.download = `${conv.title.replace(/[^\w\- ]+/g, "").trim().slice(0, 60) || "codequest-conversation"}.md`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -392,7 +392,7 @@ export function AiWorkspace({
 
           <div className="min-w-0 flex-1">
             <div className="hidden items-center gap-1 text-[9.5px] font-medium uppercase tracking-[0.12em] text-muted sm:flex">
-              <span>CODE RACE AI</span>
+              <span>CodeQuest AI</span>
               <ChevronRight className="size-2.5 opacity-60" />
               <span className="text-[#a78bfa]/90">{toolMeta(tool).label}</span>
             </div>

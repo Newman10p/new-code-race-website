@@ -9,7 +9,7 @@ import { useProfile } from "../context/ProfileContext";
 import { useConnection } from "./useTutor";
 
 /* =========================================================================
- * CODE RACE AI conversation engine.
+ * CodeQuest AI conversation engine.
  *
  * Real path: the existing /models + streaming /chat client — unchanged, no
  * API keys in the browser. Demo path: clearly-labelled local samples with a
@@ -56,7 +56,7 @@ function hasUserMessage(conv: Conversation | undefined) {
 
 function contextExtra(conv: Conversation, language: AiLanguage) {
   const parts = [
-    "You are CODE RACE AI, the coding assistant inside the CODE RACE platform. If any earlier instruction names a different assistant or platform, this identity takes precedence.",
+    "You are CodeQuest AI, the coding assistant inside the CodeQuest platform. If any earlier instruction names a different assistant or platform, this identity takes precedence.",
     `The user's selected language for this session is ${languageMeta(language).label}. Use it unless they say otherwise.`,
   ];
   if (conv.topic?.trim()) parts.push(`Current learning topic: ${conv.topic.trim()}`);
@@ -113,7 +113,7 @@ export function useRaceChat() {
       if (policy.policy === "prohibited") {
         updateMsg(conv.id, assistant.id, () => ({
           status: "failed",
-          error: policy.reason ?? "AI assistance is disabled by the current CODE RACE competition or assessment policy.",
+          error: policy.reason ?? "AI assistance is disabled by the current CodeQuest competition or assessment policy.",
         }));
         return;
       }

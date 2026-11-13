@@ -50,7 +50,7 @@ export function CommandPalette({
   const convs = conversations.use();
   const items: Item[] = useMemo(
     () => [
-      { id: "n0", label: "CODE RACE AI", group: "Navigate", icon: Sparkles, page: "ai" },
+      { id: "n0", label: "CodeQuest AI", group: "Navigate", icon: Sparkles, page: "ai" },
       { id: "n1", label: "Home", group: "Navigate", icon: Compass, page: "home" },
       { id: "n2", label: "Learn", group: "Navigate", icon: GraduationCap, page: "learn" },
       { id: "n3", label: "Create", group: "Navigate", icon: Shapes, page: "create" },

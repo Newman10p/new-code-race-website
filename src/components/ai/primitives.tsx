@@ -4,7 +4,7 @@ import { Check, X } from "lucide-react";
 import { cn } from "../../utils/cn";
 
 /* =========================================================================
- * CODE RACE AI — small, reusable primitives.
+ * CodeQuest AI — small, reusable primitives.
  * ========================================================================= */
 
 /** The product mark: a code bracket pair with a speed slash. */

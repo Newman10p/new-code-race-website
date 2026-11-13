@@ -6,8 +6,8 @@ import type { Connection } from "../../lib/ai";
 import { Popover } from "./primitives";
 
 const FUTURE = [
-  { id: "reasoning", name: "CODE RACE Reasoning", desc: "Deep, multi-step analysis", icon: BrainCircuit },
-  { id: "coding", name: "CODE RACE Coding", desc: "Optimised for implementation", icon: Cpu },
+  { id: "reasoning", name: "CodeQuest Reasoning", desc: "Deep, multi-step analysis", icon: BrainCircuit },
+  { id: "coding", name: "CodeQuest Coding", desc: "Optimised for implementation", icon: Cpu },
   { id: "custom", name: "Custom Model", desc: "Bring your own endpoint", icon: Settings2 },
 ];
 
@@ -26,7 +26,7 @@ export function ModelPicker({
   const s = settings.use();
   const models = conn.status === "ok" ? conn.models : [];
   const currentModel = models.find((m) => m.id === s.model && m.available);
-  const label = currentModel?.name ?? "CODE RACE Auto";
+  const label = currentModel?.name ?? "CodeQuest Auto";
 
   const choose = (id: string) => {
     settings.set((p) => ({ ...p, model: id }));
@@ -87,7 +87,7 @@ export function ModelPicker({
             <Sparkles className="size-3.5" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[12.5px] font-medium text-primary">CODE RACE Auto</span>
+            <span className="block text-[12.5px] font-medium text-primary">CodeQuest Auto</span>
             <span className="block text-[10.5px] leading-4 text-muted">
               {connected ? "Routes to the best available model" : "Demo workspace — no model connected"}
             </span>

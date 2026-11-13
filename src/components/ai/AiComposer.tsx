@@ -211,7 +211,7 @@ export function AiComposer({
             value={value}
             rows={1}
             disabled={blocked}
-            aria-label="Message CODE RACE AI"
+            aria-label="Message CodeQuest AI"
             onChange={(e) => setValue(e.target.value)}
             onPaste={(e) => e.clipboardData.files.length > 0 && addFiles(e.clipboardData.files)}
             onKeyDown={(e) => {

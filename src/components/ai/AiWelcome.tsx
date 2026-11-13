@@ -28,7 +28,7 @@ export function AiWelcome({
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-[4px] border border-accent-line/60 bg-accent-soft px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.14em] text-[#c4b5fd]">
                 <Sparkles className="size-2.5" />
-                CODE RACE AI
+                CodeQuest AI
               </span>
               <span className="inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-muted">
                 <span className="size-1.5 rounded-full bg-accent-2 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />

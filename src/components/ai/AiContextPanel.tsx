@@ -182,7 +182,7 @@ export function AiContextPanel({
                 <span className="text-[11.5px] text-secondary">Not connected</span>
               </div>
               <p className="mt-1 text-[10.5px] leading-4 text-muted">
-                Challenges you open in the CODE RACE arena will attach here automatically.
+                Challenges you open in the CodeQuest arena will attach here automatically.
               </p>
             </div>
           </Field>
