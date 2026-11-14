@@ -2,3 +2,7 @@ project_id = "new-code-race-website"
 
 [functions.automatic-updater]
 verify_jwt = false
+
+[functions.ai-chat]
+# The browser sends its CodeQuest access token as a Bearer token.
+verify_jwt = true

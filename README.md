@@ -1,11 +1,12 @@
 # CodeQuest Platform
 
-Supabase-backed platform for user accounts, schools, GitHub identities, competitions, points, and future features.
+Supabase-backed CodeQuest platform for user accounts, schools, GitHub identities, competitions, points, and the CodeQuest AI workspace.
 
 ## Repository structure
 
 - `supabase/migrations/` — version-controlled database schema.
 - `supabase/functions/automatic-updater/` — source for the queued-record updater.
+- `supabase/functions/ai-chat/` — server-side AI proxy (`/models`, streaming `/chat`) used by the workspace.
 - `supabase/config.toml` — local Supabase CLI configuration.
 
 ## Supabase setup

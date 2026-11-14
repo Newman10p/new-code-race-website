@@ -29,17 +29,29 @@ export type Connection =
 export function apiUrl(): string {
   return (
     settings.get().apiUrl.trim() ||
+    window.CODEQUEST?.aiUrl ||
+    import.meta.env.VITE_CODEQUEST_AI_URL ||
     window.CODEQUEST?.apiUrl ||
     import.meta.env.VITE_LUMEN_API_URL ||
     ""
   ).replace(/\/$/, "");
 }
 
+/** Session token supplied by the host platform — never a provider API key. */
+function authHeaders(): Record<string, string> {
+  const token = window.CODEQUEST?.accessToken;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export async function checkConnection(signal?: AbortSignal): Promise<Connection> {
   const base = apiUrl();
   if (!base) return { status: "not_configured" };
   try {
-    const r = await fetch(`${base}/models`, { signal, credentials: "include" });
+    const r = await fetch(`${base}/models`, {
+      signal,
+      credentials: "include",
+      headers: { Accept: "application/json", ...authHeaders() },
+    });
     if (!r.ok) return { status: "error", error: `Backend responded ${r.status}` };
     const j = (await r.json()) as { models?: ModelInfo[] };
     return { status: "ok", models: (j.models ?? []).filter((m) => m && m.id) };
@@ -116,7 +128,7 @@ export const EXPLAIN_STYLES = [
 
 export class NotConnectedError extends Error {
   constructor() {
-    super("Lumen isn't connected to an AI backend yet.");
+    super("CodeQuest AI isn't connected to a model backend yet.");
     this.name = "NotConnectedError";
   }
 }
@@ -134,6 +146,7 @@ export async function streamChat(opts: {
   const body = {
     model: opts.model,
     system: opts.system,
+    policy: currentPolicy().policy,
     messages: opts.messages.map((m) => ({
       role: m.role,
       content: [
@@ -148,7 +161,7 @@ export async function streamChat(opts: {
 
   const r = await fetch(`${base}/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+    headers: { "Content-Type": "application/json", Accept: "text/event-stream", ...authHeaders() },
     credentials: "include",
     body: JSON.stringify(body),
     signal: opts.signal,
