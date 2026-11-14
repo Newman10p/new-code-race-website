@@ -385,7 +385,7 @@ export function PreferencesDialog({
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && save()}
-            placeholder={window.CODEQUEST?.apiUrl || import.meta.env.VITE_LUMEN_API_URL || "https://your-domain.example/api/codequest-ai"}
+            placeholder={window.CODEQUEST?.aiUrl || import.meta.env.VITE_CODEQUEST_AI_URL || window.CODEQUEST?.apiUrl || import.meta.env.VITE_LUMEN_API_URL || "https://your-project.supabase.co/functions/v1/ai-chat"}
             aria-label="Backend base URL"
             spellCheck={false}
             className={cn(
